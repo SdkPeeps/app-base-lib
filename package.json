@@ -1,6 +1,6 @@
 {
   "name": "app-base-lib",
-  "version": "1.0.24",
+  "version": "1.0.45",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,8 +17,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "@types/lodash": "^4.14.181",
+  "peerDependencies": {
     "lodash": "^4.17.21",
     "rxjs": "^7.5.5"
   }

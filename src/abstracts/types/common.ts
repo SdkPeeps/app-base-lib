@@ -1,3 +1,4 @@
+import { DataBrokerConfig } from "../interfaces/data-broker/data-broker";
 
 export type ID = number|string;
 
@@ -16,10 +17,14 @@ export type AppDataBrokerThirdPartyAPIConfig = {
     key:string
 };
 
-export type AppDataBrokerConfig = {
+export type AppDataBrokerConfig = DataBrokerConfig & {
     thirdParty?:{
         api?:{
             [apiName:string] : AppDataBrokerThirdPartyAPIConfig
         },
     },
 };
+
+export type PAGINATION_OPTIONS = {perPage:number,append?:boolean} ;
+
+export type SEARCH_FUNCTION<D,SC> = ( searchConstraint:SC ) => Promise<D>;

@@ -35,7 +35,7 @@ export class PaginatedDataManager<D>{
     }
 
     /**
-     * The number of data that is loaded in a batch
+     * The number of data that a batch contains
      */
     private perPage:number;
 
@@ -90,7 +90,7 @@ export class PaginatedDataManager<D>{
      * adds a data to the list of data. The data will be added to the opposite end of where the next batch will be added.
      * 
      * @example Consider a list UI which uses this class to manage its data. When a new data is created( maybe a user input ), it should be saved somewhere 
-     * (e.g. posted to server ) and if successfully saved, it is then added to all batches of data fetched using this method and then added to the UI.
+     * (e.g. posted to server ) and if successfully saved. With this method, it is then added to all batches of data already fetched and then added to the UI.
      * 
      * @param data the data to add
      */
@@ -99,7 +99,7 @@ export class PaginatedDataManager<D>{
         if(this.append) this.data.unshift( data );
         else this.data.push( data );
 
-        // check if the newly added data will form a new batch
+        // if the newly added data will form a new batch, increment the
         if( this.data.length % this.perPage == 1 ) this.page++;
     }
 
@@ -107,16 +107,20 @@ export class PaginatedDataManager<D>{
      * Adds a new batch of data
      * @param newData The next batch of data to add to other batches that have been fetched
      */
-    public async addNextBatch( newData:D[] ){
+    public async addNextBatch( newData:D[] ):Promise<void>{
 
-        const data = this.data.slice( 0 , this.page * this.perPage );
+        if( !Array.isArray(newData) || newData.length < 1 ) throw new Error(' next batch of data to be added cannot be empty ');
+
+        const nextPage = this.nextPage;
+
+        const data = this.data.slice( 0 , ( nextPage - 1 ) * this.perPage );
 
         if(this.append) data.push( ...newData );
         else data.unshift( ...newData );
         
         this.data = data;
 
-        this.page++;
+        this.page = nextPage;
     }
 
     /**
@@ -153,7 +157,7 @@ export class PaginatedDataManager<D>{
             type == 'delete' ? OBJ_MODIFY_APPROACH.DELETE_IN_ARRAY 
             : type == 'update' ? OBJ_MODIFY_APPROACH.SET_IN_ARRAY : undefined;
 
-            if( objModifyApproach == undefined ) {
+            if( objModifyApproach != undefined ) {
                 paginatedDataManager.data = ObjectUtils.modifyObj<D[],D>( paginatedDataManager.data , data , objModifyApproach , comparator);
             }
         }
