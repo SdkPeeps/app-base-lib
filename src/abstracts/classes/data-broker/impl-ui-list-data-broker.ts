@@ -1,4 +1,5 @@
 import { Subject} from "rxjs";
+import {merge} from "lodash";
 import { CRUD } from "../../enums/common";
 import { CREATE_OR_UPDATE_UI_FLOW_OPTIONS, DELETE_UI_FLOW_OPTIONS, UIDataBroker, 
     UIDataBrokerConfig as UIListDataBrokerConfig } from "../../interfaces/data-broker/ui-data-broker";
@@ -45,21 +46,23 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
     abstract showProgressDialog(options: PROGRESS_DIALOG_OPTIONS): PROGRESS_DIALOG_RESULT;
 
     /**
-     * Will run a CRUD UI execution flow when called and allows IOC as it executes.
+     * A core method that is not limited to the data handled by any instance of this databroker. It will run a CRUD UI execution flow when called and allows IOC as it executes.
      * 
      * @param crudType The type of CRUD operation
      * @param options the options that contain data used during execution and callback functions for IOC.
      */
-    private async runCRUDUIFlow(crudType:CRUD.CREATE|CRUD.UPDATE|CRUD.DELETE,options:CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U,D>|DELETE_UI_FLOW_OPTIONS<D>): Promise<void> {
+    public async runCRUDUIFlow0<U0=U,D0=D>(crudType:CRUD.CREATE|CRUD.UPDATE|CRUD.DELETE,options:(CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U0,D0>|DELETE_UI_FLOW_OPTIONS<D0>)&{
+        crudEventEmitter:( crudType:CRUD, data:U0 | D0 ) => Promise<D0>
+    }): Promise<void> {
 
         // The data gotten as input from UI, which means it might be unnormalized.
-        let data:U|D;
+        let data:U0|D0;
 
         if( crudType == CRUD.CREATE||crudType == CRUD.UPDATE ){
 
-            const input = (options as CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U,D>).input;
+            const input = (options as CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U0,D0>).input;
 
-            let newUnnormalizedDataResult:RESULT<U|D,any>;
+            let newUnnormalizedDataResult:RESULT<U0|D0,any>;
 
             try{
 
@@ -86,7 +89,7 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
         }
         else{
 
-            const _options = options as DELETE_UI_FLOW_OPTIONS<D>;
+            const _options = options as DELETE_UI_FLOW_OPTIONS<D0>;
 
             if( _options.crudEvent.before.confirm?.dialog ){
                 const confirmDialogResult = await this.showConfirmDialog( {
@@ -109,7 +112,7 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
         try{
 
             // normalized data is returned
-            const normalizedData = await this.emitCRUDEvent( crudType , data );
+            const normalizedData = await options.crudEventEmitter( crudType , data );
 
             if( progressResult ) await progressResult.hide();
 
@@ -118,9 +121,6 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
                 message:successMsg,
             });
 
-            // update the data held by the paginatedDataManager
-            this.reflectDataIntoPaginatedDataManager( crudType , normalizedData );
-            
             const subject = options.crudEvent.after.subject;
             
             subject.next( normalizedData );
@@ -135,11 +135,38 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
                 });
 
                 const subject = options.crudEvent.after.subject;
-                subject.error( e );   
+                subject.error( e );
 
                 Promise.reject(e);
             });
         }
+    }
+
+    private async runCRUDUIFlow(crudType:CRUD.CREATE|CRUD.UPDATE|CRUD.DELETE,options:CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U,D>|DELETE_UI_FLOW_OPTIONS<D>): Promise<void> {
+        
+        const subject = new Subject<D>();
+        subject.subscribe({
+            next:( data:D ) => {
+                this.reflectDataIntoPaginatedDataManager( crudType , data );
+            }
+        });
+
+        if(options.crudEvent.after.subject){
+            subject.subscribe( options.crudEvent.after.subject );
+        }
+
+        const moreOptions = {
+            crudEvent:{
+                after:{
+                    subject
+                }
+            },
+            async crudEventEmitter(crudType, data) {
+                return this.emitCRUDEvent( crudType , data );
+            },
+        };
+
+        return this.runCRUDUIFlow0<U,D>(crudType,merge({} , options , moreOptions));
     }
 
     /**
