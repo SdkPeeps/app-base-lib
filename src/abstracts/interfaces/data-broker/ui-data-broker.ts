@@ -3,6 +3,7 @@ import { DataBroker, DataBrokerConfig } from "./data-broker";
 import { Subject } from "rxjs";
 import { ListDataBrokerLoadOneOptions, ListDataBrokerLoadOptions, ListDataBrokerResult } from "./list-data-broker";
 import { UI_MESSAGE_VALUES, TOAST_OPTIONS, PROGRESS_DIALOG_OPTIONS, BASE_DIALOG_RESULT, ALERT_DIALOG_OPTIONS, PROMPT_DIALOG_OPTIONS, CONFIRM_DIALOG_OPTIONS, CONFIRM_DIALOG_RESULT, PROMPT_DIALOG_RESULT, ALERT_DIALOG_RESULT, PROGRESS_DIALOG_RESULT, ACTION_SHEET_OPTIONS, ACTION_SHEET_RESULT, TOAST_RESULT } from "../../types/ui-commons";
+import { CRUD } from "../../enums/common";
 
 export type UIDataBrokerConfig = DataBrokerConfig & { 
     ui:{
@@ -97,6 +98,16 @@ export interface UIDataBroker< U,D,S, EV_Type> extends DataBroker<D[],EV_Type>{
     showPromptDialog( options:PROMPT_DIALOG_OPTIONS ):PROMPT_DIALOG_RESULT;
     showConfirmDialog( options:CONFIRM_DIALOG_OPTIONS ):CONFIRM_DIALOG_RESULT;
     showActionSheet( options:ACTION_SHEET_OPTIONS ) : ACTION_SHEET_RESULT;
+    
+    /**
+     * A core method that is not limited to the data handled by any instance of this databroker. It will run a CRUD UI execution flow when called and allows IOC as it executes.
+     * 
+     * @param crudType The type of CRUD operation
+     * @param options the options that contain data used during execution and callback functions for IOC.
+     */
+    runCRUDUIFlow<U0=U,D0=D>(crudType:CRUD.CREATE|CRUD.UPDATE|CRUD.DELETE,options:(CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U0,D0>|DELETE_UI_FLOW_OPTIONS<D0>)&{
+        crudEventEmitter:( crudType:CRUD, data:U0 | D0 ) => Promise<D0>
+    }): Promise<void>;
 
     /**
      * Will run a Create UI execution flow when called and allows IOC as it executes.

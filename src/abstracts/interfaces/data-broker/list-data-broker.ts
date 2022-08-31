@@ -95,6 +95,8 @@ export interface ListDataBrokerLoadOptions<S> extends ListDataBrokerLoadOptions0
      */
     emitCRUDEvent( crudType:CRUD , data?:U|D ):Promise<D>;
 
+    modifyCache( crudType:CRUD.UPDATE|CRUD.DELETE , data:D ):void;
+
     /**
      * Called to emit a CRUD event. Do not call this method directly, call emitCRUDEvent() instead.
      * @param crudType the crud type
