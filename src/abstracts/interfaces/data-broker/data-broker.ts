@@ -20,7 +20,6 @@ export interface DataBroker<EV_Type>{
     
     /**
      * Called to emit an event
-     * @param crudType the crud type
      * @param ev the event data
      */
     on(ev : DataBrokerEvent<EV_Type>);
