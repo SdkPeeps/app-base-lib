@@ -1,10 +1,5 @@
-
-import { CRUD, ID } from "../types/common";
-
-export interface DataBrokerConfig{ 
-    [index:string] : any;
-    perPage : number;
-}
+import { CRUD, ID } from "../../types/common";
+import { DataBroker } from "./data-broker";
 
 export interface ListDataBrokerResult<D>{
     [index:string] : any;
@@ -20,26 +15,11 @@ export interface ListDataBrokerLoadOptions extends ListDataBrokerLoadOneOptions{
     perPage : number;
 }
 
-export interface ListDataBrokerEvent<T>{
-    [index:string] : any;
-    type:T;
-}
-
-/**
- * An interface that allows a parent and child side to communicate in an efficient way, adhereing to principles in SOLID design patterns.
- */
-export interface DataBroker{
-    /**
-     * @returns a configuration that the child side of the data broker can use
-     */
-    getConfig() : Promise<DataBrokerConfig>;
-}
-
 /**
  * An extension of the data broker interface that handles an array of data.
  * Can be used in CRUD features.
  */
-export interface ListDataBroker< D, EV_Type> extends DataBroker{
+ export interface ListDataBroker< D, EV_Type> extends DataBroker<EV_Type>{
     
     /**
      * @param options the options that can be used to load the data
@@ -59,13 +39,6 @@ export interface ListDataBroker< D, EV_Type> extends DataBroker{
      * @returns a promise that resolves to true if the action can be carried out else it resolves to false
      */
     canCRUD( crudType:CRUD ): Promise<boolean>;
-
-    /**
-     * Called to emit an event
-     * @param crudType the crud type
-     * @param ev the event data
-     */
-    on(ev : ListDataBrokerEvent<EV_Type>);
 
     /**
      * Called to emit a CRUD event
