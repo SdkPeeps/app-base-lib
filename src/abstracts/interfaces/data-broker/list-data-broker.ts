@@ -1,17 +1,24 @@
-import { CRUD, ID } from "../../types/common";
+import { CRUD, ID, PLAIN_OBJECT } from "../../types/common";
 import { DataBroker } from "./data-broker";
+import { Observable } from "rxjs";
 
-export interface ListDataBrokerResult<D>{
-    [index:string] : any;
-    data : D ;
+export interface ListDataBrokerConfig extends PLAIN_OBJECT{ 
+    perPage : number;
+}
+
+export interface ListDataBrokerUpdate<T> extends PLAIN_OBJECT{
+    type:T,
 };
 
-export interface ListDataBrokerLoadOneOptions{
-    [index:string] : any;
+export interface ListDataBrokerResult<D> extends PLAIN_OBJECT{
+    data : D;
+};
+
+export interface ListDataBrokerLoadOneOptions extends PLAIN_OBJECT{
 }
 
 export interface ListDataBrokerLoadOptions extends ListDataBrokerLoadOneOptions{
-    page : number ;
+    page : number;
     perPage : number;
 }
 
@@ -20,6 +27,11 @@ export interface ListDataBrokerLoadOptions extends ListDataBrokerLoadOneOptions{
  * Can be used in CRUD features.
  */
  export interface ListDataBroker< D, EV_Type> extends DataBroker<EV_Type>{
+
+    /**
+     * @returns a configuration that the child side of the data broker can use
+     */
+    getConfig() : Promise<ListDataBrokerConfig>;
     
     /**
      * @param options the options that can be used to load the data
@@ -34,7 +46,12 @@ export interface ListDataBrokerLoadOptions extends ListDataBrokerLoadOneOptions{
     load( options:ListDataBrokerLoadOptions ) : Promise<ListDataBrokerResult<D[]>>;
 
     /**
-     * Called to check if a action can be carried out
+     * @returns a an observable that keeps emiting update so the client side can hold consistent information
+     */
+    getUpdateStream() : Observable<ListDataBrokerUpdate<D[]>>;
+    
+    /**
+     * Called to check if a CRUD action can be carried out
      * @param crudType the crud type
      * @returns a promise that resolves to true if the action can be carried out else it resolves to false
      */
