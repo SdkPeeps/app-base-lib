@@ -46,7 +46,7 @@ export interface ListDataBrokerLoadOptions extends ListDataBrokerLoadOneOptions{
     load( options:ListDataBrokerLoadOptions ) : Promise<ListDataBrokerResult<D[]>>;
 
     /**
-     * @returns a an observable that keeps emiting update so the client side can hold consistent information
+     * @returns an observable that keeps emiting update so the client side can hold consistent information
      */
     getUpdateStream() : Observable<ListDataBrokerUpdate<D[]>>;
     
@@ -61,6 +61,8 @@ export interface ListDataBrokerLoadOptions extends ListDataBrokerLoadOneOptions{
      * Called to emit a CRUD event
      * @param crudType the crud type
      * @param data the event data
+     * 
+     * @returns a promise that resolves if the event handling was successful else it rejects
      */
-    onCRUD( crudType:CRUD , data?:D );
+    onCRUD( crudType:CRUD , data?:D ):Promise<any>;
 }

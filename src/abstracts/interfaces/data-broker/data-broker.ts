@@ -18,6 +18,7 @@ export interface DataBroker<EV_Type>{
     /**
      * Called from child side to emit an event
      * @param ev the event data
+     * @returns a promise that resolves if the event handling was successful else it rejects
      */
-    on(ev : DataBrokerEvent<EV_Type>);
+    on(ev : DataBrokerEvent<EV_Type>):Promise<any>;
 }
