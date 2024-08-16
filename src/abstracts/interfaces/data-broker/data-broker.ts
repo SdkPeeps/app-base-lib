@@ -8,6 +8,8 @@ export interface DataBrokerEvent<T>{
 /**
  * An interface that allows a parent and child side to communicate in an efficient way, adhereing to principles in SOLID design patterns.
  * 
+ * For performance ask the parent side might choose to cache a data the child side askes for.
+ * 
  * @param EV_Type the type of the output event the child side emits
  */
 export interface DataBroker<EV_Type>{

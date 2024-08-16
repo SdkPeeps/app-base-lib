@@ -6,20 +6,24 @@ export interface ListDataBrokerConfig extends PLAIN_OBJECT{
     perPage : number;
 }
 
-export interface ListDataBrokerUpdate<T> extends PLAIN_OBJECT{
-    type:T,
-};
-
 export interface ListDataBrokerResult<D> extends PLAIN_OBJECT{
     data : D;
 };
 
+export interface ListDataBrokerCRUDUpdate<D> extends PLAIN_OBJECT{
+    crudType:CRUD,
+    data : D;
+};
+
 export interface ListDataBrokerLoadOneOptions extends PLAIN_OBJECT{
+    id:ID;
+    checkCache?:boolean;
 }
 
-export interface ListDataBrokerLoadOptions extends ListDataBrokerLoadOneOptions{
+export interface ListDataBrokerLoadOptions extends PLAIN_OBJECT{
     page : number;
     perPage : number;
+    checkCache?:boolean,
 }
 
 /**
@@ -28,9 +32,8 @@ export interface ListDataBrokerLoadOptions extends ListDataBrokerLoadOneOptions{
  * 
  * @param D the type of a single data
  * @param EV_Type the type of the output event the child side emits
- * @param UP_Type the type of the updates the child side expects for consistency
  */
- export interface ListDataBroker< D, EV_Type,UP_Type> extends DataBroker<EV_Type>{
+ export interface ListDataBroker< D, EV_Type> extends DataBroker<EV_Type>{
 
     /**
      * @returns a configuration that the child side of the data broker can use
@@ -39,20 +42,20 @@ export interface ListDataBrokerLoadOptions extends ListDataBrokerLoadOneOptions{
 
     /**
      * @param options the options that can be used to load the data
-     * @returns fetches a data with an id
+     * @returns a single data
      */
-    loadOne( id:ID , options:ListDataBrokerLoadOneOptions ) : Promise<ListDataBrokerResult<D>>;
+    loadOne( options:ListDataBrokerLoadOneOptions ) : Promise<ListDataBrokerResult<D>>;
 
-    /**
-     * @param options the options that can be used to load the data
-     * @returns an array of data
-     */
+     /**
+      * @param options the options that can be used to load the data
+      * @returns an array of data
+      */
     load( options:ListDataBrokerLoadOptions ) : Promise<ListDataBrokerResult<D[]>>;
-
-    /**
-     * @returns an observable that keeps emiting update so the client side can hold consistent information
-     */
-    getUpdateStream() : Observable<ListDataBrokerUpdate<UP_Type>>;
+     
+     /**
+      * @returns an observable that keeps emiting CRUD updates so the client side can hold consistent information
+      */
+    streamCRUDUpdates(): Observable<ListDataBrokerCRUDUpdate<D>>;
 
     /**
      * @returns a promise that resolves to true if pagination should be enabled in client side else it resolves to false
