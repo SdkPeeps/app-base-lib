@@ -1,22 +1,21 @@
 
 import { concat, EMPTY, from, map, Observable, of, switchMap } from "rxjs";
-import { DataBrokerEvent } from "../interfaces/data-broker/data-broker";
-import { ListDataBroker, ListDataBrokerConfig, ListDataBrokerCRUDUpdate, ListDataBrokerLoadOneOptions, ListDataBrokerLoadOptions, 
-    ListDataBrokerResult } from "../interfaces/data-broker/list-data-broker";
-import { CRUD } from "../types/common";
+import { ListDataBroker, ListDataBrokerLoadOneOptions, ListDataBrokerLoadOptions, 
+    ListDataBrokerResult } from "../abstracts/interfaces/data-broker/list-data-broker";
+import { CRUD } from "../abstracts/types/common";
 
 /**
  * @todo The caching feature still needs to be improved. Only loadOne() does caching for now and uses an unordered list. 
  * The paginated-data-manager needs to be improved to support managing data for an arbitrary page.
  */
-export abstract class ListCacheDataBroker<D,EV_type> implements ListDataBroker<D,EV_type>{
+export abstract class ListDataBrokerCache<D>{
 
     /**
      * @todo should be removed when paginated-data-manager is introduced
      */
     private unorderedCache:D[] = [];
 
-    constructor( private idKey = 'id' ){
+    constructor( private listDataBroker : ListDataBroker<D,any> , private idKey = 'id' ){
     }
 
     public streamOne( options: ListDataBrokerLoadOneOptions ): Observable<D> {
@@ -25,7 +24,7 @@ export abstract class ListCacheDataBroker<D,EV_type> implements ListDataBroker<D
 
         const data$ = from(this.loadOne( options )).pipe( map( result => result.data ) );
 
-        return concat( data$ , this.streamCRUDUpdates().pipe( switchMap( update => {
+        return concat( data$ , this.listDataBroker.streamCRUDUpdates().pipe( switchMap( update => {
             if( update.crudType == CRUD.UPDATE && update.data[this.idKey] == id ){
                 return of( update.data );
             }
@@ -69,16 +68,6 @@ export abstract class ListCacheDataBroker<D,EV_type> implements ListDataBroker<D
 
         return result;
     }
-
-    // CHECK THE PARENT FILE FOR DOCUMENTATION
-    abstract getConfig(): Promise<ListDataBrokerConfig>;
-    abstract streamCRUDUpdates(): Observable<ListDataBrokerCRUDUpdate<D>>;
-    abstract isPaginationEnabled(): Promise<boolean>;
-    abstract isRefreshEnabled(): Promise<boolean>;
-    abstract canCRUD(crudType: CRUD): Promise<boolean>;
-    abstract onCRUD(crudType: CRUD, data?: D): Promise<any>;
-    abstract on(ev: DataBrokerEvent<EV_type>): Promise<any> ;
-    //
 
     /**
      * @param options the options that can be used to fetch the data

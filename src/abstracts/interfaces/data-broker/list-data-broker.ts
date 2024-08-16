@@ -46,6 +46,8 @@ export interface ListDataBrokerLoadOptions extends PLAIN_OBJECT{
      */
     loadOne( options:ListDataBrokerLoadOneOptions ) : Promise<ListDataBrokerResult<D>>;
 
+    streamOne( options: ListDataBrokerLoadOneOptions ): Observable<D>;
+
      /**
       * @param options the options that can be used to load the data
       * @returns an array of data
