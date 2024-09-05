@@ -7,5 +7,5 @@
     },
     "include": [
       "src/**/*"
-    ]
+, "recyclebin/list-data-broker-cache.ts"    ]
 }

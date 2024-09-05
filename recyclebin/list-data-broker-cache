@@ -1,0 +1,130 @@
+/*
+import { concat, EMPTY, from, map, Observable, of, Subject, switchMap } from "rxjs";
+import { ListDataBroker, ListDataBrokerLoadOneOptions, ListDataBrokerLoadOptions, 
+    ListDataBrokerResult, 
+    ListDataBrokerUpdate} from "../abstracts/interfaces/data-broker/list-data-broker";
+import { CRUD } from "../abstracts/enums/common";
+import { PaginatedDataManager } from "./paginated-data-manager";
+import { DATA_COMPARATOR } from "../abstracts/types/common";
+import { ObjectUtils, OBJ_MODIFY_APPROACH } from "./object-utils";
+
+/**
+ * @todo The caching feature still needs to be improved. Only loadOne() does caching for now and uses an unordered list which still 
+ * needs to be organized. Also the paginated-data-manager needs to be improved to support managing data for an arbitrary page rather
+ * than support only nextPage.
+ */
+
+export abstract class ListDataBrokerCache<D>{
+
+    /**
+     * @todo should be removed when paginated-data-manager is introduced, and the paginated-data-manager data member variable 
+     * should be used as cache.
+     */
+    public paginatedDataManager:PaginatedDataManager<D>;
+
+    private readonly loadOneToStreamOneSubject = new Subject<ListDataBrokerUpdate<D>>();
+
+    /**
+     * 
+     * @param listDataBroker The listDataBroker to implement caching 
+     * @param idKey 
+     */
+    constructor( paginationOptions:{perPage:number,append?:boolean} , private loadOneResultAsLatest:boolean , 
+        private listDataBroker : ListDataBroker<D,any> , private idKey = 'id' ){
+        this.paginatedDataManager = new PaginatedDataManager<D>( paginationOptions.perPage , paginationOptions.append );
+    }
+
+    public streamOne( options: ListDataBrokerLoadOneOptions ): Observable<ListDataBrokerUpdate<D>> {
+
+        const id = options.id;
+
+        const data$ = from(this.loadOne( options )).pipe( map( result => {
+            const updateResult:ListDataBrokerUpdate<D> = this.createListDataBrokerUpdate( result.data );
+            return updateResult;
+        } ) );
+
+        return concat( data$ , this.combineObservables<ListDataBrokerUpdate<D>>( this.loadOneToStreamOneSubject.asObservable() , 
+        this.listDataBroker.streamCRUDUpdates().pipe( switchMap( update => {
+            if( update.crudType == CRUD.UPDATE && update.data[this.idKey] == id ){
+                const updateResult:ListDataBrokerUpdate<D> = this.createListDataBrokerUpdate(update.data) ;
+                return of( updateResult );
+            }
+            return EMPTY;
+        } ) ) ) );
+    }
+
+    private combineObservables<T>( ...observables:Observable<T>[] ) : Observable<T>{
+
+    }
+
+    public abstract getObjectPropComparator():DATA_COMPARATOR<D>;
+
+    private createListDataBrokerResult( data:D ):ListDataBrokerResult<D>{
+        return { data };
+    }
+
+    private createListDataBrokerUpdate( data:D ):ListDataBrokerResult<D>{
+        return { data };
+    }
+
+    /**
+     * @implements check parent interface for documentation
+     */
+    async loadOne(options: ListDataBrokerLoadOneOptions): Promise<ListDataBrokerResult<D>> {
+
+        if(!options.checkCache){
+
+            const data = this.paginatedDataManager.data.find( datium => datium[this.idKey] == options.id );
+
+            if( data ) return { data };
+        }
+
+        const fetchResult = await this.fetchOne( options );
+
+        if( this.loadOneResultAsLatest ){
+            const newData = fetchResult.data;
+
+            ObjectUtils.modifyObj( this.paginatedDataManager.data , newData , OBJ_MODIFY_APPROACH.SET_IN_ARRAY , 
+                this.getObjectPropComparator() );
+
+            this.loadOneToStreamOneSubject.next( this.createListDataBrokerUpdate(newData) );
+        }
+
+        return fetchResult;
+    }
+
+    /**
+     * @implements check parent interface for documentation
+     */
+    async load( options : ListDataBrokerLoadOptions ): Promise<ListDataBrokerResult<D[]>> {
+
+        const result = await this.fetch( options );
+
+        const dataResult = result.data;
+
+        const cache = this.paginatedDataManager.data;
+
+        // remove old data
+        const filteredCache = cache.filter( datium => dataResult.findIndex( d => d[this.idKey] == datium[this.idKey] ) < 0 );
+
+        // push the new data
+        filteredCache.push( ...dataResult );
+
+        this.unorderedCache = cache;
+
+        return result;
+    }
+
+    /**
+     * @param options the options that can be used to fetch the data
+     * @returns a single data
+     */
+    abstract fetchOne(options: ListDataBrokerLoadOneOptions): Promise<ListDataBrokerResult<D>>;
+    
+    /**
+     * @param options the options that can be used to fetch the data
+     * @returns an array of data
+     */
+    abstract fetch(options: ListDataBrokerLoadOptions): Promise<ListDataBrokerResult<D[]>>;
+}
+*/

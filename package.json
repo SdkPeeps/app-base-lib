@@ -1,6 +1,6 @@
 {
   "name": "app-base-lib",
-  "version": "1.0.6",
+  "version": "1.0.24",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,14 +10,16 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository":{
-    "type":"git",
-    "url":"https://github.com/anahvictoronyedic/app-base-lib.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anahvictoronyedic/app-base-lib.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/lodash": "^4.14.181",
+    "lodash": "^4.17.21",
     "rxjs": "^7.5.5"
   }
 }
