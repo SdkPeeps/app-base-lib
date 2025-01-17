@@ -1,26 +1,20 @@
-import { RESULT } from "../../types/common";
-import { DataBroker } from "./data-broker";
+import { PLAIN_OBJECT, RESULT } from "../../types/common";
+import { DataBroker, DataBrokerConfig } from "./data-broker";
 import { Subject } from "rxjs";
-import { ListDataBrokerConfig, ListDataBrokerLoadOneOptions, ListDataBrokerLoadOptions, ListDataBrokerResult } from "./list-data-broker";
+import { ListDataBrokerLoadOneOptions, ListDataBrokerLoadOptions, ListDataBrokerResult } from "./list-data-broker";
+import { UI_MESSAGE_VALUES, TOAST_OPTIONS, PROGRESS_DIALOG_OPTIONS, BASE_DIALOG_RESULT, ALERT_DIALOG_OPTIONS, PROMPT_DIALOG_OPTIONS, CONFIRM_DIALOG_OPTIONS, CONFIRM_DIALOG_RESULT, PROMPT_DIALOG_RESULT, ALERT_DIALOG_RESULT, PROGRESS_DIALOG_RESULT, ACTION_SHEET_OPTIONS, ACTION_SHEET_RESULT, TOAST_RESULT } from "../../types/ui-commons";
 
-export type TOAST_POSITION =  'top' | 'bottom' | 'middle';
-
-export type TOAST_OPTIONS = {
-    message: string,
-};
-
-export type PROGRESS_DIALOG_OPTIONS = {
-    title:string,
-    message:string
-};
-
-export type UI_MESSAGE_VALUES = {
-    [key:string] : any,
-    success?:string,
-    failure?:string,
-};
-
-export type UIDataBrokerConfig = ListDataBrokerConfig & { 
+export type UIDataBrokerConfig = DataBrokerConfig & { 
+    ui:{
+        general:{
+            pagination:{
+                enabled:boolean
+            },
+            swipeRefresh:{
+                enabled:boolean
+            }
+        }
+    }
 };
 
 export type CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U,D> = {
@@ -49,6 +43,12 @@ export type DELETE_UI_FLOW_OPTIONS<D> = {
     data:D,
     crudEvent:{
         before:{
+            confirm?:{
+                dialog?:{
+                    title:string,
+                    message:string
+                }
+            },
             progress?:{
                 title:string,
                 message:string,
@@ -66,10 +66,12 @@ export type DELETE_UI_FLOW_OPTIONS<D> = {
  * An extension of the data broker interface that handles a list of data.
  * Can be used in CRUD features.
  * 
- * @param D the type of a single data
- * @param EV_Type the type of the output event the child side emits
+ * @type U the type of a unnormalized data
+ * @type D the type of a single data
+ * @type S the type of the search constraint specified during loading
+ * @type EV_Type the type of the output event the child side emits
  */
-export interface UIDataBroker< U,D, EV_Type> extends DataBroker<D[],EV_Type>{
+export interface UIDataBroker< U,D,S, EV_Type> extends DataBroker<D[],EV_Type>{
 
     /**
      * @returns a configuration that the child side of the data broker can use
@@ -77,21 +79,11 @@ export interface UIDataBroker< U,D, EV_Type> extends DataBroker<D[],EV_Type>{
     getConfig() : UIDataBrokerConfig;
 
     /**
-     * @returns a promise that resolves to true if UI pagination should be enabled in client side else it resolves to false
-    */
-    isPaginationEnabled(): Promise<boolean>;
-
-    /**
-     * @returns a promise that resolves to true if the UI list in client side is refreshable else it resolves to false
-     */
-    isRefreshEnabled(): Promise<boolean>;
- 
-    /**
      * Used to show a toast message
      * @param options the toast options
      * @returns a promise resolves to an object that contains a hide function which can be used to hide the toast 
      */
-    showToast( options:TOAST_OPTIONS ):Promise<{hide:()=>Promise<void>}>;
+    showToast( options:TOAST_OPTIONS ):TOAST_RESULT;
 
     /**
      * Used to show a progress dialog
@@ -99,7 +91,12 @@ export interface UIDataBroker< U,D, EV_Type> extends DataBroker<D[],EV_Type>{
      * @returns a promise resolves to an object that contains a hide function which can be used to hide the progress and a progressSubject
      * which when provided will run in deterministic mode and updates the progress to any number emited from the subject( an observable ).
      */
-    showProgressDialog( options:PROGRESS_DIALOG_OPTIONS ):Promise<{ progressSubject?:Subject<number> , hide:()=>Promise<void>}>;
+    showProgressDialog( options:PROGRESS_DIALOG_OPTIONS ):PROGRESS_DIALOG_RESULT;
+
+    showAlertDialog( options:ALERT_DIALOG_OPTIONS ):ALERT_DIALOG_RESULT;
+    showPromptDialog( options:PROMPT_DIALOG_OPTIONS ):PROMPT_DIALOG_RESULT;
+    showConfirmDialog( options:CONFIRM_DIALOG_OPTIONS ):CONFIRM_DIALOG_RESULT;
+    showActionSheet( options:ACTION_SHEET_OPTIONS ) : ACTION_SHEET_RESULT;
 
     /**
      * Will run a Create UI execution flow when called and allows IOC as it executes.
@@ -129,5 +126,5 @@ export interface UIDataBroker< U,D, EV_Type> extends DataBroker<D[],EV_Type>{
      * @param options the options that can be used to fetch the data from a data source
      * @returns an object that contains the array of data
      */
-    fetch(options: ListDataBrokerLoadOptions): Promise<ListDataBrokerResult<D[]>>;
+    fetch(options: ListDataBrokerLoadOptions<S>): Promise<ListDataBrokerResult<D[]>>;
 }

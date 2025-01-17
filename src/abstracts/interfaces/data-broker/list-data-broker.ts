@@ -4,7 +4,9 @@ import { Observable } from "rxjs";
 import { CRUD } from "../../enums/common";
 
 export interface ListDataBrokerConfig extends DataBrokerConfig{
-    perPage : number;
+    pagination:{
+        perPage : number;
+    }
 }
 
 export interface ListDataBrokerResult<D> extends PLAIN_OBJECT{
@@ -19,25 +21,31 @@ export interface ListDataBrokerCRUDUpdate<D> extends ListDataBrokerUpdate<D>{
     crudType:CRUD
 };
 
-export interface ListDataBrokerLoadOneOptions extends PLAIN_OBJECT{
-    id:ID;
+export interface ListDataBrokerLoadOptions0 extends PLAIN_OBJECT{
     checkCache?:boolean;
 }
 
-export interface ListDataBrokerLoadOptions extends PLAIN_OBJECT{
+export interface ListDataBrokerLoadOneOptions extends ListDataBrokerLoadOptions0{
+    id:ID;
+}
+
+export interface ListDataBrokerLoadOptions<S> extends ListDataBrokerLoadOptions0{
+    search?:{
+        constraint:S
+    },
     page : number;
     perPage : number;
-    checkCache?:boolean,
 }
 
 /**
  * An extension of the data broker interface that handles a list of data. Can be used in CRUD features.
  * 
- * @param U the type of a unnormalized data
- * @param D the type of a normalized data
- * @param EV_Type the type of the output event the child side emits
+ * @type U the type of a unnormalized data
+ * @type D the type of a normalized data
+ * @type S the type of the search constraint specified during loading
+ * @type EV_Type the type of the output event the child side emits
  */
- export interface ListDataBroker<U,D, EV_Type> extends DataBroker<D[],EV_Type>{
+ export interface ListDataBroker<U,D,S, EV_Type> extends DataBroker<D[],EV_Type>{
 
     /**
      * @returns a configuration that the child side of the data broker can use
@@ -63,8 +71,8 @@ export interface ListDataBrokerLoadOptions extends PLAIN_OBJECT{
      * @param options the options that can be used to load the array of data from a cache or data source
      * @returns an object that contains an array of data
      */
-    load( options:ListDataBrokerLoadOptions ) : Promise<ListDataBrokerResult<D[]>>;
-    
+    load( options:ListDataBrokerLoadOptions<S> ) : Promise<ListDataBrokerResult<D[]>>;
+
     /**
      * @returns an observable that keeps emiting CRUD updates so the client side can hold consistent information
      */
