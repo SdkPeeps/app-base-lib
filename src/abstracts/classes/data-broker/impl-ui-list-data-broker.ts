@@ -51,7 +51,7 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
      * @param crudType The type of CRUD operation
      * @param options the options that contain data used during execution and callback functions for IOC.
      */
-    public async runCRUDUIFlow0<U0=U,D0=D>(crudType:CRUD.CREATE|CRUD.UPDATE|CRUD.DELETE,options:(CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U0,D0>|DELETE_UI_FLOW_OPTIONS<D0>)&{
+    public async runCRUDUIFlow<U0=U,D0=D>(crudType:CRUD.CREATE|CRUD.UPDATE|CRUD.DELETE,options:(CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U0,D0>|DELETE_UI_FLOW_OPTIONS<D0>)&{
         crudEventEmitter:( crudType:CRUD, data:U0 | D0 ) => Promise<D0>
     }): Promise<void> {
 
@@ -117,7 +117,7 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
             if( progressResult ) await progressResult.hide();
 
             const successMsg = options.crudEvent.after.messages?.success;
-            if(successMsg) this.showToast({
+            if(successMsg) await this.showToast({
                 message:successMsg,
             });
 
@@ -142,7 +142,7 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
         }
     }
 
-    private async runCRUDUIFlow(crudType:CRUD.CREATE|CRUD.UPDATE|CRUD.DELETE,options:CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U,D>|DELETE_UI_FLOW_OPTIONS<D>): Promise<void> {
+    private async runCRUDUIFlow0(crudType:CRUD.CREATE|CRUD.UPDATE|CRUD.DELETE,options:CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U,D>|DELETE_UI_FLOW_OPTIONS<D>): Promise<void> {
         
         const subject = new Subject<D>();
         subject.subscribe({
@@ -161,12 +161,12 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
                     subject
                 }
             },
-            async crudEventEmitter(crudType, data) {
+            crudEventEmitter: async (crudType, data) => {
                 return this.emitCRUDEvent( crudType , data );
             },
         };
 
-        return this.runCRUDUIFlow0<U,D>(crudType,merge({} , options , moreOptions));
+        return this.runCRUDUIFlow<U,D>(crudType,merge({} , options , moreOptions));
     }
 
     /**
@@ -174,7 +174,7 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
      * @param options the options that contain data used during execution and callback functions for IOC.
      */
     async runCreateUIFlow(options:CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U,D>): Promise<void> {
-        return this.runCRUDUIFlow( CRUD.CREATE, options );
+        return this.runCRUDUIFlow0( CRUD.CREATE, options );
     }
 
     /**
@@ -182,7 +182,7 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
      * @param options the options that contain data used during execution and callback functions for IOC.
      */
     async runUpdateUIFlow(options:CREATE_OR_UPDATE_UI_FLOW_OPTIONS<U,D>): Promise<void> {
-        return this.runCRUDUIFlow( CRUD.UPDATE, options );
+        return this.runCRUDUIFlow0( CRUD.UPDATE, options );
     }
 
     /**
@@ -190,7 +190,7 @@ export abstract class ImplUIListDataBroker<U,D,S, EV_Type> extends ImplListDataB
      * @param options the options that contain data used during execution and callback functions for IOC.
      */
     async runDeleteUIFlow(options: DELETE_UI_FLOW_OPTIONS<D>): Promise<void> {
-        return this.runCRUDUIFlow( CRUD.DELETE, options );
+        return this.runCRUDUIFlow0( CRUD.DELETE, options );
     }
     
     // CHECK PARENT INTERFACE FOR DOCUMENTATION

@@ -187,6 +187,10 @@ export abstract class ImplListDataBroker<U,D,S,EV_Type> implements ListDataBroke
         return fetchResult;
     }
 
+    public async modifyCache( crudType:CRUD.UPDATE|CRUD.DELETE , data: D) {
+        this.reflectDataIntoPaginatedDataManager(crudType,data);
+    }
+    
     public async emitCRUDEvent( crudType:CRUD , data?:U|D ):Promise<D>{
 
         const normalizedData = await this.onCRUD(crudType,data);
